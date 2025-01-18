@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Manage Products</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Manage Products</h1>
+    <form id="addProductForm" method="post" action="/addProduct" class="mb-4" th:object="${requestDto}">
+        <div class="mb-3">
+            <label for="name" class="form-label">Product Name</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+        </div>
+        <div class="mb-3">
+            <label for="price" class="form-label">Price</label>
+            <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+        </div>
+        <div class="mb-3">
+            <label for="stockQuantity" class="form-label">Stock Quantity</label>
+            <input type="number" class="form-control" id="stockQuantity" name="stockQuantity" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Product</button>
+    </form>
+
+    <script>
+    async function submitProduct() {
+    const form = document.getElementById('addProductForm');
+
+    // Create request payload
+    const requestPayload = {
+    request: {
+    name: form.name.value,
+    price: form.price.value,
+    stockQuantity: form.stockQuantity.value
+    }
+    };
+
+    try {
+    // Send POST request
+    const response = await fetch('/addProduct', {
+    method: 'POST',
+    headers: {
+    'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(requestPayload)
+    });
+
+    if (response.ok) {
+    const message = await response.text();
+    alert(message); // Show success message
+    form.reset(); // Clear the form
+    } else {
+    throw new Error('Failed to add product');
+    }
+    } catch (error) {
+    console.error('Error:', error);
+    alert('An error occurred while adding the product');
+    }
+    }
+    </script>
+
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Category</th>
+        </tr>
+        </thead>
+        <tbody id="productTableBody">
+        <!-- Data will be populated dynamically -->
+        </tbody>
+    </table>
+    <a href="/" class="btn btn-secondary mt-3">Back to Home</a>
+</div>
+
+<script>
+    // Fetch data from the backend and populate the table
+    async function fetchProducts() {
+        try {
+            const response = await fetch('http://localhost:8080/products');
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const products = await response.json();
+
+            // Populate the table
+            const tableBody = document.getElementById('productTableBody');
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            products.forEach(product => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${product.productId}</td>
+                    <td>${product.name || 'N/A'}</td>
+                    <td>${product.price != null ? product.price.toFixed(2) : 'N/A'}</td>
+                    <td>${product.stockQuantity}</td>
+                    <td>${product.category || 'N/A'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error fetching products:', error);
+        }
+    }
+
+    // Call fetchProducts on page load
+    document.addEventListener('DOMContentLoaded', fetchProducts);
+</script>
+</body>
+</html>
